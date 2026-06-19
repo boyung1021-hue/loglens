@@ -27,11 +27,13 @@
 
 ### 🌆 오후 (Ingest 파이프라인)
 
-- [ ] **lib/pattern-engine.ts: normalize/fingerprint/aggregate 구현**
+- [x] **lib/pattern-engine.ts: normalize/fingerprint/aggregate 구현**
   - 로그 정규화, fingerprint 해싱, fingerprint별 집계. 순수 함수 위주로 작성해 테스트 용이하게.
+  - ✅ 완료: `lib/pattern-engine.ts`에 순수 함수 `normalize`/`fingerprint`/`aggregate` + 타입(`LogLine`, `PatternAgg`) 구현. DB/네트워크 의존 없음.
 - [ ] **POST /api/deployments (배포 등록)**
   - service/version 필수 검증, `deployments` 레코드 생성 후 201 반환.
 - [ ] **POST /api/ingest (정규화→집계→upsert, 원본 미저장)**
   - 로그 batch 수신 → 정규화→fingerprint→집계 → `log_patterns`/`pattern_stats` upsert. 원본 로그는 메모리에서 버린다.
-- [ ] **정규화 단위 테스트 작성**
+- [x] **정규화 단위 테스트 작성**
   - `normalize()`의 핵심 케이스(타임스탬프/UUID/IP/경로/숫자 토큰화) 테스트. drift 정확도의 핵심이자 가장 버그 나기 쉬운 곳.
+  - ✅ 완료: Vitest 셋업(`vitest.config.ts`, `test`/`test:watch` 스크립트). `lib/pattern-engine.test.ts` 20개 테스트 전부 통과.
