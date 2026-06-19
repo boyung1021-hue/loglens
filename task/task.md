@@ -21,8 +21,9 @@
 - [x] **lib/db.ts 연결 확인**
   - 로컬 `DATABASE_URL`로 PG 연결 생성, 간단한 SELECT로 검증. `pg`(node-postgres) 또는 Drizzle.
   - ✅ 완료: `pg` 8.21.0 설치, `lib/db.ts`에 `search_path=loglens` 고정 싱글톤 `Pool` + `query()` 헬퍼. SELECT로 연결 및 4개 테이블 확인.
-- [ ] **환경변수 설정 + .gitignore 확인**
+- [x] **환경변수 설정 + .gitignore 확인**
   - `.env.local`에 `DATABASE_URL`(로컬 PG)·`OPENAI_API_KEY` 설정. 레포 커밋 금지 — `.gitignore`에 `.env.local` 포함 확인. (실제 키 값은 직접 입력)
+  - ✅ 완료: `.gitignore`에 `.env*` 포함 → 모든 env 파일 커밋 차단 확인. `DATABASE_URL`은 `.env.development`에 설정됨. `OPENAI_API_KEY`는 AI 작업 단계에서 직접 입력.
 
 ### 🌆 오후 (Ingest 파이프라인)
 
