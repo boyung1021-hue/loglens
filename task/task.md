@@ -13,12 +13,14 @@
 - [x] **Next.js 15 앱 생성 + Tailwind·shadcn/ui 설치**
   - Next.js 15(App Router) 앱 생성, Tailwind CSS + shadcn/ui 설치·초기화. pnpm 사용.
   - ✅ 완료: Next.js `15.5.19` (App Router, TypeScript, no `src/`, alias `@/*`, Turbopack), Tailwind CSS `v4`, shadcn/ui (`components.json`, `components/ui/button.tsx`, `lib/utils.ts`). pnpm `11.6.0`(corepack). `pnpm run build` 통과.
-- [ ] **로컬 PostgreSQL을 Docker로 기동**
+- [x] **로컬 PostgreSQL을 Docker로 기동**
   - `docker compose up -d db`. 클라우드 DB(Aurora)는 데모 직전에만. Aurora와 동일한 PG라 `DATABASE_URL`만 교체하면 호환.
-- [ ] **schema.sql 작성 + 로컬 DB 적용**
+- [x] **schema.sql 작성 + 로컬 DB 적용**
   - `deployments`, `log_patterns`, `pattern_stats`, `drift_reports` 4개 테이블 DDL 작성 후 로컬 DB에 적용.
-- [ ] **lib/db.ts 연결 확인**
+  - ✅ 완료: `db/schema.md`에 4개 테이블 DDL 작성(전용 `loglens` 스키마). 로컬 PG 16.14에 적용 완료.
+- [x] **lib/db.ts 연결 확인**
   - 로컬 `DATABASE_URL`로 PG 연결 생성, 간단한 SELECT로 검증. `pg`(node-postgres) 또는 Drizzle.
+  - ✅ 완료: `pg` 8.21.0 설치, `lib/db.ts`에 `search_path=loglens` 고정 싱글톤 `Pool` + `query()` 헬퍼. SELECT로 연결 및 4개 테이블 확인.
 - [ ] **환경변수 설정 + .gitignore 확인**
   - `.env.local`에 `DATABASE_URL`(로컬 PG)·`OPENAI_API_KEY` 설정. 레포 커밋 금지 — `.gitignore`에 `.env.local` 포함 확인. (실제 키 값은 직접 입력)
 
