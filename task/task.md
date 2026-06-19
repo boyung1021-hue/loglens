@@ -30,8 +30,9 @@
 - [x] **lib/pattern-engine.ts: normalize/fingerprint/aggregate 구현**
   - 로그 정규화, fingerprint 해싱, fingerprint별 집계. 순수 함수 위주로 작성해 테스트 용이하게.
   - ✅ 완료: `lib/pattern-engine.ts`에 순수 함수 `normalize`/`fingerprint`/`aggregate` + 타입(`LogLine`, `PatternAgg`) 구현. DB/네트워크 의존 없음.
-- [ ] **POST /api/deployments (배포 등록)**
+- [x] **POST /api/deployments (배포 등록)**
   - service/version 필수 검증, `deployments` 레코드 생성 후 201 반환.
+  - ✅ 완료: `app/api/deployments/route.ts`(zod 검증, Node 런타임) + `lib/deployments.ts`(`createDeployment`). curl 검증 — 정상 201, 검증 실패/깨진 JSON 400. deps: zod.
 - [ ] **POST /api/ingest (정규화→집계→upsert, 원본 미저장)**
   - 로그 batch 수신 → 정규화→fingerprint→집계 → `log_patterns`/`pattern_stats` upsert. 원본 로그는 메모리에서 버린다.
 - [x] **정규화 단위 테스트 작성**

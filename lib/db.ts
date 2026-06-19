@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, type QueryResultRow } from "pg";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -22,7 +22,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 /** 간단한 파라미터 쿼리 헬퍼. */
-export function query<T extends Record<string, unknown> = Record<string, unknown>>(
+export function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: unknown[],
 ) {
