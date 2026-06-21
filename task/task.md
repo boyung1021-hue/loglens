@@ -107,8 +107,9 @@
 - [x] **AI fallback / 오프라인 스텁 플래그**
   - `OPENAI_API_KEY` 없거나 호출 실패 시 fallback은 이미 동작. 데모에서 네트워크 의존 없이 돌릴 수 있게 오프라인 스텁 플래그(env) 정리 + 동작 확인.
   - ✅ `LOGLENS_AI=off|0|false` 로 키가 있어도 AI를 끄고 규칙 기반 fallback으로 고정(`lib/openai.ts`의 `getClient` 단락). `LOGLENS_AI=off pnpm seed`로 동작 확인(전 배포 `· AI fallback`), `lib/openai.test.ts` 회귀 추가(45개 통과). 발표 시 `LOGLENS_AI=off pnpm dev`로 네트워크 의존 제거.
-- [ ] **에러 처리 다듬기 (없는 배포 / baseline 없음 등)**
+- [x] **에러 처리 다듬기 (없는 배포 / baseline 없음 등)**
   - 404/400/422·빈 상태 응답과 UI 메시지를 일관되게. baseline 없는 첫 배포, 분석 전 배포 등 엣지 케이스 표시 점검.
+  - ✅ 상세 페이지 잘못된 UUID → DB 쿼리 전 `z.uuid()` 검증으로 깔끔한 404(기존엔 22P02 크래시). `app/error.tsx`(예외 바운더리 + 다시 시도)·`app/not-found.tsx`(친절한 404) 추가. Home 빈 상태 안내에 `pnpm seed` 추가. E2E 검증: 잘못/없는 UUID 상세→404, analyze 잘못된 id→400, 없는 배포 ingest/analyze→404, 빈 본문→400. baseline 없음/미분석 상태는 기존 note·"아직 분석되지 않았습니다" 표시 유지.
 
 ### 🌆 오후 (마감)
 
