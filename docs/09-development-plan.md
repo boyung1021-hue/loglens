@@ -20,17 +20,17 @@
 ### 📅 Day 1 — 기반 + Walking Skeleton
 
 **오전 (셋업 — 전부 로컬)**
-- [ ] Next.js 15 앱 생성, Tailwind + shadcn/ui 설치
-- [ ] **로컬 PostgreSQL을 Docker로 기동** (`docker compose up -d db`) — 클라우드 DB는 데모 직전에만
-- [ ] `schema.sql` 작성 + 로컬 DB에 적용 (deployments, log_patterns, pattern_stats, drift_reports)
-- [ ] `lib/db.ts` 연결 확인 (로컬 `DATABASE_URL`로 간단 SELECT)
-- [ ] 환경변수 설정: 로컬은 `.env.local`에 `DATABASE_URL`(로컬 PG)·`OPENAI_API_KEY` 작성 (레포에 커밋 금지, `.gitignore` 확인)
+- [x] Next.js 15 앱 생성, Tailwind + shadcn/ui 설치
+- [x] **로컬 PostgreSQL을 Docker로 기동** (`docker compose up -d db`) — 클라우드 DB는 데모 직전에만
+- [x] `schema.sql` 작성 + 로컬 DB에 적용 (deployments, log_patterns, pattern_stats, drift_reports)
+- [x] `lib/db.ts` 연결 확인 (로컬 `DATABASE_URL`로 간단 SELECT)
+- [x] 환경변수 설정: 로컬은 `.env.local`에 `DATABASE_URL`(로컬 PG)·`OPENAI_API_KEY` 작성 (레포에 커밋 금지, `.gitignore` 확인)
 
 **오후 (Ingest 파이프라인)**
-- [ ] `lib/pattern-engine.ts`: `normalize()` + `fingerprint()` + `aggregate()`
-- [ ] `POST /api/deployments` (등록)
-- [ ] `POST /api/ingest` (정규화→집계→upsert, 원본 미저장)
-- [ ] 정규화 단위 테스트 몇 개 (가장 버그 나기 쉬운 곳)
+- [x] `lib/pattern-engine.ts`: `normalize()` + `fingerprint()` + `aggregate()`
+- [x] `POST /api/deployments` (등록)
+- [x] `POST /api/ingest` (정규화→집계→upsert, 원본 미저장)
+- [x] 정규화 단위 테스트 몇 개 (가장 버그 나기 쉬운 곳)
 
 **Day 1 종료 기준**: 로컬에서 curl로 배포 등록 → 로그 ingest → 로컬 DB에 패턴/통계가 쌓인다.
 

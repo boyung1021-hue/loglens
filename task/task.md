@@ -33,8 +33,47 @@
 - [x] **POST /api/deployments (배포 등록)**
   - service/version 필수 검증, `deployments` 레코드 생성 후 201 반환.
   - ✅ 완료: `app/api/deployments/route.ts`(zod 검증, Node 런타임) + `lib/deployments.ts`(`createDeployment`). curl 검증 — 정상 201, 검증 실패/깨진 JSON 400. deps: zod.
-- [ ] **POST /api/ingest (정규화→집계→upsert, 원본 미저장)**
+- [x] **POST /api/ingest (정규화→집계→upsert, 원본 미저장)**
   - 로그 batch 수신 → 정규화→fingerprint→집계 → `log_patterns`/`pattern_stats` upsert. 원본 로그는 메모리에서 버린다.
+  - ✅ 완료: `app/api/ingest/route.ts`(zod 검증, 404/400 처리) + `lib/patterns.ts`(`persistPatterns` 트랜잭션 upsert, `deploymentExists`). `aggregate`에 first/last seen 추가. E2E curl 검증 — 신규/누적/404/400 정상, DB 통계 누적 확인.
 - [x] **정규화 단위 테스트 작성**
   - `normalize()`의 핵심 케이스(타임스탬프/UUID/IP/경로/숫자 토큰화) 테스트. drift 정확도의 핵심이자 가장 버그 나기 쉬운 곳.
   - ✅ 완료: Vitest 셋업(`vitest.config.ts`, `test`/`test:watch` 스크립트). `lib/pattern-engine.test.ts` 20개 테스트 전부 통과.
+
+---
+
+## 📅 Day 2 — Drift 엔진 + AI + 화면
+
+> **종료 기준**: 로컬 테스트 앱이 보낸 로그로 분석이 돌고, 브라우저에서 문제 배포를 열면 CRITICAL + AI 요약 + 변경 패턴이 보인다.
+
+### 🌅 오전 (Drift 엔진)
+
+- [x] **lib/drift-engine.ts: computeDrift() 구현**
+  - 현재 배포 패턴 집계 vs baseline 집계를 비교해 패턴별 변화를 분류: `NEW`(신규 등장) / `DISAPPEARED`(사라짐) / `SPIKE`(급증) / `DROP`(급감).
+  - DB/네트워크 의존 없는 순수 함수로 작성(입력: 두 `PatternAgg[]`, 출력: `DriftResult`). 테스트 용이하게.
+  - ✅ 완료: `lib/drift-engine.ts`에 순수 함수 `computeDrift(PatternPair[])` + 타입(`PatternPair`/`DriftItem`/`DriftMetrics`/`DriftResult`/`Severity`). 임계값 `SPIKE_RATIO=3`/`DROP_RATIO=0.33`/`MIN_COUNT=5`. fingerprint가 level을 포함하므로 errorCount는 level에서 파생(인터페이스 단순화). 분류 상호배타. `tsc --noEmit` 통과.
+- [x] **drift 점수 / severity 산정**
+  - 패턴별 변화량·레벨(error 가중치)·신규 error 패턴 등을 종합해 `driftScore` 계산, `SAFE`/`WARNING`/`CRITICAL` severity로 매핑.
+  - 문제 배포가 확실히 CRITICAL이 되도록 가중치/임계값은 Day 3에서 튜닝(여기선 기본값).
+  - ✅ 완료: 가중합 score(신규에러 25 / 신규비에러 5 / 급증에러 20 / 소멸정상 8 / 에러율 상승분 ×100), 0~100 clamp. severity: ≥60 critical / ≥25 warning / else safe. `metrics`(총량·에러율·패턴 다양성) 포함.
+  - ✅ 추가: `lib/drift-engine.test.ts` 16개 테스트 통과(분류·MIN_COUNT 노이즈컷·metrics·score/severity 경계·문제배포 critical).
+- [ ] **baseline 자동 선택 쿼리 + 패턴 비교 쿼리**
+  - 같은 service의 직전 정상 배포를 baseline으로 자동 선택하는 쿼리. baseline·current의 `pattern_stats`를 fingerprint 기준으로 비교해 집계 로드.
+  - baseline 없을 때(첫 배포) 처리 방식 정의.
+- [ ] **POST /api/deployments/:id/analyze (AI 제외, 결정적 결과까지)**
+  - 배포 ID로 baseline 선택 → 패턴 비교 → `computeDrift()` → severity 산정까지. AI 요약은 아직 붙이지 않고 결정적 결과(JSON)만 반환.
+  - 없는 배포(404), baseline 없음 등 에러 처리.
+
+### 🌆 오후 (AI + UI + 로컬 테스트 앱)
+
+- [ ] **lib/openai.ts: summarizeDrift() + fallback**
+  - drift 결과를 입력받아 `gpt-4o-mini`로 사람이 읽는 요약 + 롤백 권고 생성. API 실패/지연 시 결정적 fallback 요약으로 대체.
+  - ⚠️ `OPENAI_API_KEY`는 환경변수로만 사용(레포·문서·코드에 키 값 미기재). 키 입력은 사용자가 직접.
+- [ ] **analyze에 AI 요약 연결 + drift_reports 저장**
+  - `/api/deployments/:id/analyze`에 `summarizeDrift()` 연결, 결과(severity/score/summary/recommendation/diff)를 `drift_reports`에 저장.
+- [ ] **배포 목록 페이지 (app/page.tsx) — severity 신호등**
+  - 배포 목록을 severity 신호등(SAFE/WARNING/CRITICAL 색상)으로 표시. shadcn 컴포넌트 사용.
+- [ ] **배포 상세 페이지 (app/deployments/[id]/page.tsx) — verdict + 요약 + diff**
+  - verdict(severity), AI 요약·롤백 권고, 변경 패턴 diff(before ▶ after) 표시.
+- [ ] **로컬 테스트 앱(test-app/)으로 end-to-end 확인**
+  - `test-app/`(index/scenarios/generator/client) 작성. 시나리오별 로그 생성 → `/api/deployments` 등록 → `/api/ingest` batch 전송 → `--analyze`로 분석 트리거까지 실제 HTTP 경로 검증. (개발계획서 §9 참고)

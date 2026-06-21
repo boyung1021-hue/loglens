@@ -116,4 +116,21 @@ describe("aggregate", () => {
   it("빈 배치는 빈 배열을 반환한다", () => {
     expect(aggregate([])).toEqual([]);
   });
+
+  it("타임스탬프로 firstSeen/lastSeen(min/max)을 계산한다", () => {
+    const result = aggregate([
+      { message: "User 1 ping", timestamp: "2026-06-13T09:01:00Z" },
+      { message: "User 2 ping", timestamp: "2026-06-13T09:00:00Z" },
+      { message: "User 3 ping", timestamp: "2026-06-13T09:02:00Z" },
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].firstSeen).toBe("2026-06-13T09:00:00Z");
+    expect(result[0].lastSeen).toBe("2026-06-13T09:02:00Z");
+  });
+
+  it("타임스탬프가 없으면 firstSeen/lastSeen은 undefined다", () => {
+    const result = aggregate([{ message: "no time" }]);
+    expect(result[0].firstSeen).toBeUndefined();
+    expect(result[0].lastSeen).toBeUndefined();
+  });
 });
