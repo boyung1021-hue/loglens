@@ -57,9 +57,11 @@
   - 문제 배포가 확실히 CRITICAL이 되도록 가중치/임계값은 Day 3에서 튜닝(여기선 기본값).
   - ✅ 완료: 가중합 score(신규에러 25 / 신규비에러 5 / 급증에러 20 / 소멸정상 8 / 에러율 상승분 ×100), 0~100 clamp. severity: ≥60 critical / ≥25 warning / else safe. `metrics`(총량·에러율·패턴 다양성) 포함.
   - ✅ 추가: `lib/drift-engine.test.ts` 16개 테스트 통과(분류·MIN_COUNT 노이즈컷·metrics·score/severity 경계·문제배포 critical).
-- [ ] **baseline 자동 선택 쿼리 + 패턴 비교 쿼리**
+- [x] **baseline 자동 선택 쿼리 + 패턴 비교 쿼리**
   - 같은 service의 직전 정상 배포를 baseline으로 자동 선택하는 쿼리. baseline·current의 `pattern_stats`를 fingerprint 기준으로 비교해 집계 로드.
   - baseline 없을 때(첫 배포) 처리 방식 정의.
+  - ✅ 완료: `lib/baseline.ts`에 `selectBaseline(currentId)` + `loadPatternPairs(currentId, baselineId|null)`. baseline 규칙 = 같은 service·environment, current보다 먼저, `rolled_back` 제외, 과거 `critical` 제외, 패턴 통계 있는 것 중 최근(deployed_at→created_at 동률 결정). 비교는 양쪽 `pattern_stats`를 pattern_id로 UNION+LEFT JOIN → `PatternPair[]`. baseline 없으면 `null` → 같은 쿼리에서 `deployment_id=NULL` 미매칭으로 baselineCount 전부 0(전부 신규 후보).
+  - ✅ 검증: 로컬 PG에 임시 데이터 삽입 후 트랜잭션 ROLLBACK으로 3케이스 확인 — baseline 선택(critical 제외), 패턴 비교(NEW 0→142), 첫 배포(NULL) baseline 전부 0. `tsc --noEmit` 통과.
 - [ ] **POST /api/deployments/:id/analyze (AI 제외, 결정적 결과까지)**
   - 배포 ID로 baseline 선택 → 패턴 비교 → `computeDrift()` → severity 산정까지. AI 요약은 아직 붙이지 않고 결정적 결과(JSON)만 반환.
   - 없는 배포(404), baseline 없음 등 에러 처리.
