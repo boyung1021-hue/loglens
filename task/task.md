@@ -104,8 +104,9 @@
   - ✅ 정상 3개(b7c2f10/c4d9a83/9f8e7d6) + 문제 1개(a1b2c3d)를 API route와 동일한 lib 파이프라인으로 직접 적재. 서버 없이 `pnpm seed` 한 줄(기본 리셋 후 재시드, `--keep`로 이어붙이기). E2E 결과: 정상 SAFE, 문제 CRITICAL(drift 92). `drift-engine.test.ts`에 데모 시나리오 회귀 가드 추가(38→40 통과).
 - [ ] **임계값/가중치 튜닝 → 문제 배포가 확실히 CRITICAL**
   - `drift-engine`의 `SPIKE_RATIO`/`DROP_RATIO`/`MIN_COUNT`·점수 가중치를 시드 데이터에 맞춰 조정. 정상 배포는 SAFE, 문제 배포는 확실히 CRITICAL로 갈리도록.
-- [ ] **AI fallback / 오프라인 스텁 플래그**
+- [x] **AI fallback / 오프라인 스텁 플래그**
   - `OPENAI_API_KEY` 없거나 호출 실패 시 fallback은 이미 동작. 데모에서 네트워크 의존 없이 돌릴 수 있게 오프라인 스텁 플래그(env) 정리 + 동작 확인.
+  - ✅ `LOGLENS_AI=off|0|false` 로 키가 있어도 AI를 끄고 규칙 기반 fallback으로 고정(`lib/openai.ts`의 `getClient` 단락). `LOGLENS_AI=off pnpm seed`로 동작 확인(전 배포 `· AI fallback`), `lib/openai.test.ts` 회귀 추가(45개 통과). 발표 시 `LOGLENS_AI=off pnpm dev`로 네트워크 의존 제거.
 - [ ] **에러 처리 다듬기 (없는 배포 / baseline 없음 등)**
   - 404/400/422·빈 상태 응답과 UI 메시지를 일관되게. baseline 없는 첫 배포, 분석 전 배포 등 엣지 케이스 표시 점검.
 
