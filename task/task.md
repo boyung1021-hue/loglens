@@ -68,17 +68,24 @@
   - ✅ 완료: `app/api/deployments/[id]/analyze/route.ts`(Node 런타임, 본문 선택 — `baselineId` override 가능) + `lib/reports.ts`(`saveDriftReport`/`markDeploymentStatus`/`buildDetails`). 흐름: `selectBaseline` → `loadPatternPairs` → `computeDrift` → `drift_reports` 저장 + status `analyzed`. summary/recommendation은 `null`(다음 AI 단계에서 채움).
   - ✅ baseline 없을 때(첫 배포): 422 대신 **중립 리포트**(score 0 / safe / baselineId null / note) 저장 후 200 — 전부 NEW로 처리해 오탐 critical 내지 않음.
   - ✅ E2E curl 검증(로컬 dev 서버): baseline 자동선택 → 신규 에러로 driftScore 64 **critical**, 미존재 404, 잘못된 id 400, 깨진 JSON 400, 첫 배포 중립 safe. 검증 후 테스트 데이터 정리.
-
 ### 🌆 오후 (AI + UI + 로컬 테스트 앱)
 
-- [ ] **lib/openai.ts: summarizeDrift() + fallback**
+- [x] **lib/openai.ts: summarizeDrift() + fallback**
   - drift 결과를 입력받아 `gpt-4o-mini`로 사람이 읽는 요약 + 롤백 권고 생성. API 실패/지연 시 결정적 fallback 요약으로 대체.
   - ⚠️ `OPENAI_API_KEY`는 환경변수로만 사용(레포·문서·코드에 키 값 미기재). 키 입력은 사용자가 직접.
-- [ ] **analyze에 AI 요약 연결 + drift_reports 저장**
+  - ✅ 완료: `lib/openai.ts`에 `summarizeDrift(DriftResult)` → `{summary, keyChanges[], recommendation, fallback}`. `gpt-4o-mini` + `json_object`. `OPENAI_API_KEY` 없음/호출 실패/파싱 실패는 모두 `fallbackSummary`(규칙 기반)로 흡수. deps: `openai@6.44`.
+- [x] **analyze에 AI 요약 연결 + drift_reports 저장**
   - `/api/deployments/:id/analyze`에 `summarizeDrift()` 연결, 결과(severity/score/summary/recommendation/diff)를 `drift_reports`에 저장.
-- [ ] **배포 목록 페이지 (app/page.tsx) — severity 신호등**
+  - ✅ 완료: analyze 라우트가 `computeDrift` 뒤 `summarizeDrift` 호출 → `summary`/`recommendation`은 컬럼, `keyChanges`/`aiFallback`은 `details`에 저장. AI 실패해도 결정적 결과 유지.
+- [x] **배포 목록 페이지 (app/page.tsx) — severity 신호등**
   - 배포 목록을 severity 신호등(SAFE/WARNING/CRITICAL 색상)으로 표시. shadcn 컴포넌트 사용.
-- [ ] **배포 상세 페이지 (app/deployments/[id]/page.tsx) — verdict + 요약 + diff**
+  - ✅ 완료: `app/page.tsx`(서버 컴포넌트, `force-dynamic`) + `lib/deployments.ts#listDeployments`(LATERAL로 최신 리포트 조인) + `components/severity.tsx`(`SeverityBadge`/`SeverityDot`, safe=emerald/warning=amber/critical=red/분석전=gray). drift 점수·상대시간 표시.
+- [x] **배포 상세 페이지 (app/deployments/[id]/page.tsx) — verdict + 요약 + diff**
   - verdict(severity), AI 요약·롤백 권고, 변경 패턴 diff(before ▶ after) 표시.
-- [ ] **로컬 테스트 앱(test-app/)으로 end-to-end 확인**
+  - ✅ 완료: `app/deployments/[id]/page.tsx` + `lib/deployments.ts#getDeploymentDetail`(상세+최신 리포트+baseline 버전). verdict 배지, drift score, 지표(에러율/총량/패턴 before ▶ after), AI 요약+keyChanges+권고(fallback 배지), NEW/SPIKE/DROP/DISAPPEARED 섹션. baseline 없는 첫 배포는 note 표시.
+- [x] **로컬 테스트 앱(test-app/)으로 end-to-end 확인**
   - `test-app/`(index/scenarios/generator/client) 작성. 시나리오별 로그 생성 → `/api/deployments` 등록 → `/api/ingest` batch 전송 → `--analyze`로 분석 트리거까지 실제 HTTP 경로 검증. (개발계획서 §9 참고)
+  - ✅ 완료: `test-app/`(scenarios/generator/client/index) + `testapp:normal`/`testapp:problem` 스크립트. deps: `tsx@4.22`(esbuild 빌드 승인 — `pnpm-workspace.yaml`).
+  - ✅ E2E 검증: normal(11548 lines, baseline) → problem(10472 lines, --analyze) → **critical / drift 92**. 목록·상세 페이지 HTTP 200 렌더 확인(CRITICAL verdict, 신규 NPE·gateway, 급증 DB timeout, fallback 요약). 단위 테스트 38개 통과.
+
+> **Day 2 종료 기준 달성**: 로컬 테스트 앱이 보낸 로그로 분석이 돌고, 브라우저에서 문제 배포를 열면 CRITICAL + (AI/fallback) 요약 + 변경 패턴이 보인다. (실 AI 요약은 `OPENAI_API_KEY` 설정 시 자동 활성)
