@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { z } from "zod";
 import { getDeploymentDetail, type DriftDetails } from "@/lib/deployments";
 import { SeverityBadge } from "@/components/severity";
 
@@ -46,6 +47,8 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 export default async function DeploymentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  // 잘못된 UUID는 DB 쿼리 전에 404로 처리한다 (UUID 컬럼에 직접 넣으면 22P02로 크래시).
+  if (!z.uuid().safeParse(id).success) notFound();
   const dep = await getDeploymentDetail(id);
   if (!dep) notFound();
 
