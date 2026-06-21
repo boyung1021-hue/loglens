@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computeDrift, type PatternPair } from "@/lib/drift-engine";
+import { aggregate, type LogLine } from "@/lib/pattern-engine";
+import { SCENARIOS } from "../test-app/scenarios";
 
 /** 테스트용 PatternPair 생성 헬퍼. fingerprint는 template+level로 적당히 만든다. */
 function pair(p: Partial<PatternPair> & Pick<PatternPair, "baselineCount" | "currentCount">): PatternPair {
@@ -134,5 +136,58 @@ describe("computeDrift — score / severity", () => {
     );
     const r = computeDrift(many);
     expect(r.driftScore).toBe(100);
+  });
+});
+
+// ── 데모 회귀 가드 ──────────────────────────────────────────────────────────
+// test-app/scenarios.ts(시드 == 테스트 앱)의 실제 분포를 엔진에 통과시켜
+// 데모 결과(정상=SAFE, 문제=CRITICAL drift 92)를 고정한다.
+// 시나리오 가중치 또는 엔진 임계값/가중치를 바꿔 데모 판정이 흔들리면 여기서 깨진다.
+
+/** 시나리오 분포 → 결정적 로그 라인. generator의 랜덤 fill을 고정값으로 대체(카운트는 동일). */
+function logsFor(scenario: string): LogLine[] {
+  return SCENARIOS[scenario].specs.flatMap((s) =>
+    Array.from({ length: s.weight }, () => ({
+      level: s.level,
+      message: s.template.replace(/\{ms\}/g, "123").replace(/\{id\}/g, "1234").replace(/\{n\}/g, "7"),
+    })),
+  );
+}
+
+/** baseline·current 시나리오를 fingerprint 기준으로 짝지어 PatternPair[] 생성 (loadPatternPairs의 순수함수 버전). */
+function pairsFor(baseline: string, current: string): PatternPair[] {
+  const b = new Map(aggregate(logsFor(baseline)).map((a) => [a.fingerprint, a]));
+  const c = new Map(aggregate(logsFor(current)).map((a) => [a.fingerprint, a]));
+  return [...new Set([...b.keys(), ...c.keys()])].map((fp) => {
+    const a = (b.get(fp) ?? c.get(fp))!;
+    return {
+      fingerprint: fp,
+      template: a.template,
+      level: a.level,
+      baselineCount: b.get(fp)?.count ?? 0,
+      currentCount: c.get(fp)?.count ?? 0,
+    };
+  });
+}
+
+describe("computeDrift — 데모 시나리오 회귀 (시드 데이터 고정)", () => {
+  it("정상 → 정상 배포는 SAFE (drift 0)", () => {
+    const r = computeDrift(pairsFor("normal", "normal"));
+    expect(r.severity).toBe("safe");
+    expect(r.driftScore).toBe(0);
+  });
+
+  it("정상 → 문제 배포는 CRITICAL · drift 92 (시드 실행 결과와 동일)", () => {
+    const r = computeDrift(pairsFor("normal", "problem"));
+    expect(r.driftScore).toBe(92);
+    expect(r.severity).toBe("critical");
+
+    // 신규 에러 3종(NPE·gateway·DB timeout) + 신규 경고 1종(retrying) = 4
+    expect(r.newPatterns).toHaveLength(4);
+    expect(r.newPatterns.filter((p) => p.level === "error")).toHaveLength(3);
+    // baseline에만 있던 정상 패턴(cache warmed) 소멸
+    expect(r.disappearedPatterns).toHaveLength(1);
+    // 문제 시나리오의 신규 에러는 NEW로 잡히므로 SPIKE는 없다
+    expect(r.spikingPatterns).toHaveLength(0);
   });
 });

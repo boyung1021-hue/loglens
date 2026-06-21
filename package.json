@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "seed": "tsx --env-file=.env.development scripts/seed.ts",
     "testapp:normal": "tsx test-app/index.ts --scenario normal",
     "testapp:problem": "tsx test-app/index.ts --scenario problem --analyze"
   },
