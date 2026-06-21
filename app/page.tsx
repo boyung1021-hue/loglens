@@ -29,7 +29,8 @@ export default async function Home() {
 
       {deployments.length === 0 ? (
         <div className="rounded-xl border border-dashed p-12 text-center text-sm text-muted-foreground">
-          아직 배포가 없습니다. <code className="font-mono">pnpm testapp:problem</code> 으로 로그를 보내보세요.
+          아직 배포가 없습니다. <code className="font-mono">pnpm seed</code> 로 데모 데이터를 채우거나{" "}
+          <code className="font-mono">pnpm testapp:problem</code> 으로 로그를 보내보세요.
         </div>
       ) : (
         <ul className="divide-y rounded-xl border bg-card">
