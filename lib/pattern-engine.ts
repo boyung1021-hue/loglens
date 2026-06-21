@@ -17,6 +17,8 @@ export type LogLevel = "info" | "warn" | "error";
 export interface LogLine {
   message: string;
   level?: LogLevel;
+  /** ISO-8601 타임스탬프 (옵션). first/last seen 집계에 쓰인다. */
+  timestamp?: string;
 }
 
 /** fingerprint별 집계 결과. pattern_stats / log_patterns upsert의 입력이 된다. */
@@ -29,6 +31,9 @@ export interface PatternAgg {
   errorCount: number;
   /** 대표 원본 1줄 (옵션, PII 주의). */
   sample?: string;
+  /** 이 패턴이 배치 내에서 처음/마지막 등장한 시각 (타임스탬프가 있을 때만). */
+  firstSeen?: string;
+  lastSeen?: string;
 }
 
 /**
@@ -71,7 +76,7 @@ export function fingerprint(template: string, level: string): string {
 export function aggregate(logs: LogLine[]): PatternAgg[] {
   const map = new Map<string, PatternAgg>();
 
-  for (const { message, level = "info" } of logs) {
+  for (const { message, level = "info", timestamp } of logs) {
     const template = normalize(message);
     const fp = fingerprint(template, level);
 
@@ -79,6 +84,15 @@ export function aggregate(logs: LogLine[]): PatternAgg[] {
     if (existing) {
       existing.count += 1;
       if (level === "error") existing.errorCount += 1;
+      // ISO-8601(UTC) 문자열은 사전순 비교가 곧 시간순 비교다.
+      if (timestamp) {
+        if (existing.firstSeen === undefined || timestamp < existing.firstSeen) {
+          existing.firstSeen = timestamp;
+        }
+        if (existing.lastSeen === undefined || timestamp > existing.lastSeen) {
+          existing.lastSeen = timestamp;
+        }
+      }
     } else {
       map.set(fp, {
         fingerprint: fp,
@@ -87,6 +101,8 @@ export function aggregate(logs: LogLine[]): PatternAgg[] {
         count: 1,
         errorCount: level === "error" ? 1 : 0,
         sample: message,
+        firstSeen: timestamp,
+        lastSeen: timestamp,
       });
     }
   }
