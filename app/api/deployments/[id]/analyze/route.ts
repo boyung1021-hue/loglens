@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { loadPatternPairs, selectBaseline } from "@/lib/baseline";
 import { computeDrift } from "@/lib/drift-engine";
+import { summarizeDrift } from "@/lib/openai";
 import { deploymentExists } from "@/lib/patterns";
 import { buildDetails, markDeploymentStatus, saveDriftReport } from "@/lib/reports";
 
@@ -68,7 +69,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const pairs = await loadPatternPairs(id, baseline.id);
     const drift = computeDrift(pairs);
-    const details = buildDetails(drift);
+
+    // AI 요약(실패 시 내부에서 fallback). keyChanges는 details에 함께 보관한다.
+    const ai = await summarizeDrift(drift);
+    const details = { ...buildDetails(drift), keyChanges: ai.keyChanges, aiFallback: ai.fallback };
 
     const report = await saveDriftReport(
       id,
@@ -76,6 +80,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       drift.driftScore,
       drift.severity,
       details,
+      { summary: ai.summary, recommendation: ai.recommendation },
     );
     await markDeploymentStatus(id, "analyzed");
 
