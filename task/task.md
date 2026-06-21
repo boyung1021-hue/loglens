@@ -98,9 +98,10 @@
 
 ### 🌅 오전 (데모 안정화)
 
-- [ ] **scripts/seed.ts: 데모 데이터 시드**
+- [x] **scripts/seed.ts: 데모 데이터 시드**
   - 정상 배포 2~3개 + 문제 배포 1개를 DB에 직접 채워 데모 환경을 한 번에 재현. `test-app/scenarios.ts`의 분포를 공유(또는 import)해 시드와 테스트 앱이 같은 데이터를 쓰게 한다.
   - 데모 중 데이터가 꼬여도 "리셋 + 시드 재실행 1줄"로 복구되도록.
+  - ✅ 정상 3개(b7c2f10/c4d9a83/9f8e7d6) + 문제 1개(a1b2c3d)를 API route와 동일한 lib 파이프라인으로 직접 적재. 서버 없이 `pnpm seed` 한 줄(기본 리셋 후 재시드, `--keep`로 이어붙이기). E2E 결과: 정상 SAFE, 문제 CRITICAL(drift 92). `drift-engine.test.ts`에 데모 시나리오 회귀 가드 추가(38→40 통과).
 - [ ] **임계값/가중치 튜닝 → 문제 배포가 확실히 CRITICAL**
   - `drift-engine`의 `SPIKE_RATIO`/`DROP_RATIO`/`MIN_COUNT`·점수 가중치를 시드 데이터에 맞춰 조정. 정상 배포는 SAFE, 문제 배포는 확실히 CRITICAL로 갈리도록.
 - [ ] **AI fallback / 오프라인 스텁 플래그**
