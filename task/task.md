@@ -62,9 +62,12 @@
   - baseline 없을 때(첫 배포) 처리 방식 정의.
   - ✅ 완료: `lib/baseline.ts`에 `selectBaseline(currentId)` + `loadPatternPairs(currentId, baselineId|null)`. baseline 규칙 = 같은 service·environment, current보다 먼저, `rolled_back` 제외, 과거 `critical` 제외, 패턴 통계 있는 것 중 최근(deployed_at→created_at 동률 결정). 비교는 양쪽 `pattern_stats`를 pattern_id로 UNION+LEFT JOIN → `PatternPair[]`. baseline 없으면 `null` → 같은 쿼리에서 `deployment_id=NULL` 미매칭으로 baselineCount 전부 0(전부 신규 후보).
   - ✅ 검증: 로컬 PG에 임시 데이터 삽입 후 트랜잭션 ROLLBACK으로 3케이스 확인 — baseline 선택(critical 제외), 패턴 비교(NEW 0→142), 첫 배포(NULL) baseline 전부 0. `tsc --noEmit` 통과.
-- [ ] **POST /api/deployments/:id/analyze (AI 제외, 결정적 결과까지)**
+- [x] **POST /api/deployments/:id/analyze (AI 제외, 결정적 결과까지)**
   - 배포 ID로 baseline 선택 → 패턴 비교 → `computeDrift()` → severity 산정까지. AI 요약은 아직 붙이지 않고 결정적 결과(JSON)만 반환.
   - 없는 배포(404), baseline 없음 등 에러 처리.
+  - ✅ 완료: `app/api/deployments/[id]/analyze/route.ts`(Node 런타임, 본문 선택 — `baselineId` override 가능) + `lib/reports.ts`(`saveDriftReport`/`markDeploymentStatus`/`buildDetails`). 흐름: `selectBaseline` → `loadPatternPairs` → `computeDrift` → `drift_reports` 저장 + status `analyzed`. summary/recommendation은 `null`(다음 AI 단계에서 채움).
+  - ✅ baseline 없을 때(첫 배포): 422 대신 **중립 리포트**(score 0 / safe / baselineId null / note) 저장 후 200 — 전부 NEW로 처리해 오탐 critical 내지 않음.
+  - ✅ E2E curl 검증(로컬 dev 서버): baseline 자동선택 → 신규 에러로 driftScore 64 **critical**, 미존재 404, 잘못된 id 400, 깨진 JSON 400, 첫 배포 중립 safe. 검증 후 테스트 데이터 정리.
 
 ### 🌆 오후 (AI + UI + 로컬 테스트 앱)
 
