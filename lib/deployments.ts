@@ -129,6 +129,20 @@ export interface DeploymentDetail extends Deployment {
 
 /** 배포 상세 + 최신 drift 리포트(baseline 버전 포함)를 조회한다. 없으면 null. */
 export async function getDeploymentDetail(id: string): Promise<DeploymentDetail | null> {
+  // DB 미연결(.env 없음 / Vercel에 DB 연결 전)이면 데모 데이터로 폴백한다.
+  if (!isDbConfigured()) return getDemoDeploymentDetail(id);
+  try {
+    return await getDeploymentDetailFromDb(id);
+  } catch (err) {
+    if (isConnectionError(err)) {
+      console.warn("DB 연결 실패 → 데모 데이터로 폴백:", err instanceof Error ? err.message : err);
+      return getDemoDeploymentDetail(id);
+    }
+    throw err;
+  }
+}
+
+async function getDeploymentDetailFromDb(id: string): Promise<DeploymentDetail | null> {
   const dep = await query<Deployment & { patternCount: number }>(
     `SELECT d.id, d.service, d.version, d.environment,
             d.deployed_at AS "deployedAt", d.status,
