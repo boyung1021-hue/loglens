@@ -112,7 +112,7 @@ function buildReport(
       severity: "safe",
       summary: null,
       recommendation: null,
-      details: { note: "비교할 baseline 배포가 없어 drift를 계산하지 않았습니다 (첫 배포)." },
+      details: { note: "No baseline deployment to compare against — drift not computed (first deployment)." },
       createdAt,
     };
   }

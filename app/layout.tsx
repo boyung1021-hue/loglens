@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "LogLens",
-  description: "배포 전후 로그 패턴 변화(drift) 감지",
+  description: "Detects log pattern drift before and after deployments",
 };
 
 export default function RootLayout({

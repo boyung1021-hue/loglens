@@ -21,13 +21,13 @@ export interface AiDriftSummary {
 
 const MODEL = "gpt-4o-mini";
 
-const SYSTEM_PROMPT = `너는 배포 안정성 분석가다. 배포 전후 로그 패턴의 변화(drift) 데이터를 받아,
-엔지니어가 롤백 여부를 즉시 판단할 수 있도록 한국어로 요약한다.
-규칙:
-- 추측 금지. 주어진 데이터만 근거로 한다.
-- 신규 에러 패턴과 에러율 상승을 최우선으로 강조한다.
-- 반드시 아래 JSON 스키마로만 답한다:
-  { "summary": "2~3문장 요약", "keyChanges": ["핵심 변화 불릿", ...], "recommendation": "한 줄 권고" }`;
+const SYSTEM_PROMPT = `You are a deployment reliability analyst. Given log pattern drift data from before
+and after a deployment, summarize it in English so an engineer can immediately decide whether to roll back.
+Rules:
+- No speculation. Base everything only on the given data.
+- Prioritize new error patterns and a rising error rate.
+- Respond ONLY with the following JSON schema:
+  { "summary": "2-3 sentence summary", "keyChanges": ["key change bullet", ...], "recommendation": "one-line recommendation" }`;
 
 /**
  * 데모 오프라인 스위치. LOGLENS_AI=off|0|false 이면 키가 있어도 AI를 호출하지 않고
@@ -100,9 +100,9 @@ export async function summarizeDrift(drift: DriftResult): Promise<AiDriftSummary
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 
 function changeLine(i: DriftItem): string {
-  if (i.baselineCount === 0) return `신규: ${i.template} (${i.currentCount}건)`;
-  const ratio = i.ratio === null ? "" : ` (${Math.round(i.ratio * 10) / 10}배)`;
-  return `급증: ${i.template} (${i.baselineCount} → ${i.currentCount}건${ratio})`;
+  if (i.baselineCount === 0) return `New: ${i.template} (${i.currentCount})`;
+  const ratio = i.ratio === null ? "" : ` (${Math.round(i.ratio * 10) / 10}x)`;
+  return `Spike: ${i.template} (${i.baselineCount} → ${i.currentCount}${ratio})`;
 }
 
 /**
@@ -114,10 +114,10 @@ export function fallbackSummary(drift: DriftResult): AiDriftSummary {
   const newErrors = newPatterns.filter((p) => p.level === "error");
 
   const summary =
-    `Drift 점수 ${driftScore} (${severity}). ` +
-    `신규 패턴 ${newPatterns.length}개(에러 ${newErrors.length}개), 급증 ${spikingPatterns.length}개, ` +
-    `소멸 ${disappearedPatterns.length}개. ` +
-    `에러율 ${pct(metrics.errorRateBefore)} → ${pct(metrics.errorRateAfter)}.`;
+    `Drift score ${driftScore} (${severity}). ` +
+    `${newPatterns.length} new pattern(s) (${newErrors.length} error), ${spikingPatterns.length} spiking, ` +
+    `${disappearedPatterns.length} disappeared. ` +
+    `Error rate ${pct(metrics.errorRateBefore)} → ${pct(metrics.errorRateAfter)}.`;
 
   const keyChanges = [
     ...newErrors.slice(0, 3).map(changeLine),
@@ -125,15 +125,15 @@ export function fallbackSummary(drift: DriftResult): AiDriftSummary {
     ...disappearedPatterns
       .filter((p) => p.level !== "error")
       .slice(0, 2)
-      .map((i) => `소멸: ${i.template} (이전 ${i.baselineCount}건)`),
+      .map((i) => `Disappeared: ${i.template} (was ${i.baselineCount})`),
   ];
 
   const recommendation =
     severity === "critical"
-      ? "즉시 롤백을 검토하세요. 신규 에러 패턴 또는 에러율 상승이 사용자 영향으로 이어질 수 있습니다."
+      ? "Consider an immediate rollback. New error patterns or a rising error rate may be impacting users."
       : severity === "warning"
-        ? "변화가 감지되었습니다. 배포 상태를 확인하세요."
-        : "유의미한 drift가 없습니다. 정상 배포로 보입니다.";
+        ? "Changes detected. Review the deployment status."
+        : "No significant drift. This looks like a healthy deployment.";
 
   return { summary, keyChanges, recommendation, fallback: true };
 }

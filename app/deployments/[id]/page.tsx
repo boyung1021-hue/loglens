@@ -59,7 +59,7 @@ export default async function DeploymentDetailPage({ params }: { params: Promise
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
       <Link href="/" className="text-sm text-muted-foreground hover:underline">
-        ← 배포 목록
+        ← Deployments
       </Link>
 
       {/* 헤더 */}
@@ -84,7 +84,7 @@ export default async function DeploymentDetailPage({ params }: { params: Promise
 
       {!report ? (
         <div className="rounded-xl border border-dashed p-12 text-center text-sm text-muted-foreground">
-          아직 분석되지 않았습니다.
+          Not analyzed yet.
         </div>
       ) : details.note ? (
         <div className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">{details.note}</div>
@@ -102,9 +102,9 @@ export default async function DeploymentDetailPage({ params }: { params: Promise
             </div>
             {m && (
               <div className="mt-5 grid grid-cols-2 gap-4 border-t pt-4 sm:grid-cols-4">
-                <Metric label="에러율" value={`${pct(m.errorRateBefore)} ▶ ${pct(m.errorRateAfter)}`} />
-                <Metric label="총 로그" value={`${m.totalBefore} ▶ ${m.totalAfter}`} />
-                <Metric label="패턴 수" value={`${m.patternsBefore} ▶ ${m.patternsAfter}`} />
+                <Metric label="Error rate" value={`${pct(m.errorRateBefore)} ▶ ${pct(m.errorRateAfter)}`} />
+                <Metric label="Total logs" value={`${m.totalBefore} ▶ ${m.totalAfter}`} />
+                <Metric label="Patterns" value={`${m.patternsBefore} ▶ ${m.patternsAfter}`} />
               </div>
             )}
           </div>
@@ -113,7 +113,7 @@ export default async function DeploymentDetailPage({ params }: { params: Promise
           {(report.summary || report.recommendation) && (
             <div className="rounded-xl border bg-card p-5">
               <div className="mb-2 flex items-center gap-2">
-                <h2 className="text-sm font-semibold">AI 요약</h2>
+                <h2 className="text-sm font-semibold">AI Summary</h2>
                 {details.aiFallback && (
                   <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                     fallback
@@ -137,7 +137,7 @@ export default async function DeploymentDetailPage({ params }: { params: Promise
           )}
 
           {/* 변경 패턴 diff */}
-          <Section title="신규 패턴 (NEW)" count={details.newPatterns?.length ?? 0}>
+          <Section title="New patterns (NEW)" count={details.newPatterns?.length ?? 0}>
             {details.newPatterns?.map((p) => (
               <li key={p.fingerprint} className="flex items-center justify-between gap-4 px-5 py-3">
                 <Template level={p.level}>{p.template}</Template>
@@ -148,7 +148,7 @@ export default async function DeploymentDetailPage({ params }: { params: Promise
             ))}
           </Section>
 
-          <Section title="급증 (SPIKE)" count={details.spikingPatterns?.length ?? 0}>
+          <Section title="Spiking (SPIKE)" count={details.spikingPatterns?.length ?? 0}>
             {details.spikingPatterns?.map((p) => (
               <li key={p.fingerprint} className="flex items-center justify-between gap-4 px-5 py-3">
                 <Template level={p.level}>{p.template}</Template>
@@ -160,7 +160,7 @@ export default async function DeploymentDetailPage({ params }: { params: Promise
             ))}
           </Section>
 
-          <Section title="급감 (DROP)" count={details.droppingPatterns?.length ?? 0}>
+          <Section title="Dropping (DROP)" count={details.droppingPatterns?.length ?? 0}>
             {details.droppingPatterns?.map((p) => (
               <li key={p.fingerprint} className="flex items-center justify-between gap-4 px-5 py-3">
                 <Template level={p.level}>{p.template}</Template>
@@ -171,7 +171,7 @@ export default async function DeploymentDetailPage({ params }: { params: Promise
             ))}
           </Section>
 
-          <Section title="소멸 (DISAPPEARED)" count={details.disappearedPatterns?.length ?? 0}>
+          <Section title="Disappeared (DISAPPEARED)" count={details.disappearedPatterns?.length ?? 0}>
             {details.disappearedPatterns?.map((p) => (
               <li key={p.fingerprint} className="flex items-center justify-between gap-4 px-5 py-3">
                 <Template level={p.level}>{p.template}</Template>

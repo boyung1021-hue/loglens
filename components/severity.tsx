@@ -20,7 +20,7 @@ const STYLES: Record<string, { dot: string; badge: string; label: string }> = {
   },
 };
 
-const UNKNOWN = { dot: "bg-muted-foreground/40", badge: "bg-muted text-muted-foreground ring-border", label: "분석 전" };
+const UNKNOWN = { dot: "bg-muted-foreground/40", badge: "bg-muted text-muted-foreground ring-border", label: "PENDING" };
 
 const styleOf = (s: Severity) => (s && STYLES[s]) || UNKNOWN;
 

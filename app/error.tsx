@@ -17,20 +17,20 @@ export default function Error({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-24 text-center">
-      <p className="text-sm font-semibold text-red-600 dark:text-red-400">오류</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">문제가 발생했습니다</h1>
+      <p className="text-sm font-semibold text-red-600 dark:text-red-400">Error</p>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight">Something went wrong</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        데이터를 불러오지 못했습니다. 데이터베이스 연결을 확인하세요.
+        Failed to load data. Please check the database connection.
       </p>
       <div className="mt-6 flex items-center justify-center gap-3">
         <button
           onClick={reset}
           className="rounded-lg border px-4 py-2 text-sm transition-colors hover:bg-muted/50"
         >
-          다시 시도
+          Try again
         </button>
         <Link href="/" className="text-sm text-muted-foreground hover:underline">
-          배포 목록
+          Deployments
         </Link>
       </div>
     </div>

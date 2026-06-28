@@ -74,7 +74,7 @@ async function analyzeStep(id: string, version: string) {
 
   if (!baseline) {
     await saveDriftReport(id, null, 0, "safe", {
-      note: "비교할 baseline 배포가 없어 drift를 계산하지 않았습니다 (첫 배포).",
+      note: "No baseline deployment to compare against — drift not computed (first deployment).",
     });
     await markDeploymentStatus(id, "analyzed");
     console.log(`  ↳ ${version}: baseline 없음 → safe (첫 배포)`);

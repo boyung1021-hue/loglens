@@ -33,7 +33,7 @@ describe("fallbackSummary — 규칙 기반 요약", () => {
   it("severity가 critical이면 롤백 권고를 낸다", () => {
     const fb = fallbackSummary(drift);
     expect(fb.fallback).toBe(true);
-    expect(fb.recommendation).toContain("롤백");
+    expect(fb.recommendation).toContain("rollback");
     expect(fb.keyChanges.length).toBeGreaterThan(0);
   });
 });
