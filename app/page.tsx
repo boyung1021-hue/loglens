@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listDeployments } from "@/lib/deployments";
+import { isDbConfigured } from "@/lib/db";
 import { SeverityBadge } from "@/components/severity";
 
 // 항상 최신 DB 상태를 보여준다(캐시 비활성).
@@ -17,6 +18,7 @@ function timeAgo(iso: string): string {
 
 export default async function Home() {
   const deployments = await listDeployments();
+  const demoMode = !isDbConfigured();
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
@@ -26,6 +28,13 @@ export default async function Home() {
           배포 전후 로그 패턴 변화(drift)를 감지합니다.
         </p>
       </header>
+
+      {demoMode && (
+        <div className="mb-6 rounded-lg border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-400/30 dark:bg-amber-950/40 dark:text-amber-200">
+          🧪 데모 모드 — 데이터베이스가 연결되지 않아 예시 데이터를 보여주고 있습니다.
+          <code className="ml-1 font-mono">DATABASE_URL</code>을 설정하면 실제 데이터로 전환됩니다.
+        </div>
+      )}
 
       {deployments.length === 0 ? (
         <div className="rounded-xl border border-dashed p-12 text-center text-sm text-muted-foreground">

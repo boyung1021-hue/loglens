@@ -10,7 +10,7 @@
 // DATABASE_URL 필요 — package.json의 seed 스크립트가 --env-file로 주입한다.
 // (OPENAI_API_KEY가 없으면 요약은 규칙 기반 fallback으로 떨어진다 — 데모는 멈추지 않는다.)
 
-import { pool, query } from "@/lib/db";
+import { getPool, query } from "@/lib/db";
 import { aggregate } from "@/lib/pattern-engine";
 import { persistPatterns } from "@/lib/patterns";
 import { createDeployment } from "@/lib/deployments";
@@ -121,4 +121,4 @@ main()
     console.error("❌ 시드 실패:", e instanceof Error ? e.message : e);
     process.exitCode = 1;
   })
-  .finally(() => pool.end());
+  .finally(() => getPool().end());

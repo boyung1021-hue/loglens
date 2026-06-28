@@ -1,4 +1,4 @@
-import { pool } from "@/lib/db";
+import { getPool } from "@/lib/db";
 import type { PatternAgg } from "@/lib/pattern-engine";
 
 export interface PersistResult {
@@ -18,7 +18,7 @@ export async function persistPatterns(
 ): Promise<PersistResult> {
   if (aggs.length === 0) return { newPatternCount: 0 };
 
-  const client = await pool.connect();
+  const client = await getPool().connect();
   try {
     await client.query("BEGIN");
 
@@ -63,6 +63,6 @@ export async function persistPatterns(
 
 /** 배포가 존재하는지 확인한다. */
 export async function deploymentExists(deploymentId: string): Promise<boolean> {
-  const { rowCount } = await pool.query("SELECT 1 FROM deployments WHERE id = $1", [deploymentId]);
+  const { rowCount } = await getPool().query("SELECT 1 FROM deployments WHERE id = $1", [deploymentId]);
   return rowCount === 1;
 }

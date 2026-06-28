@@ -1,4 +1,23 @@
-import { query } from "@/lib/db";
+import { isDbConfigured, query } from "@/lib/db";
+import { getDemoDeployments, getDemoDeploymentDetail } from "@/lib/demo-data";
+
+/**
+ * DB 연결 자체가 안 되는 상황인지 판단한다(쿼리 문법 오류 등은 제외).
+ * 연결 거부/호스트 못 찾음/타임아웃 등 → 데모 데이터로 폴백한다.
+ */
+function isConnectionError(err: unknown): boolean {
+  const code = (err as { code?: string })?.code;
+  if (code && ["ECONNREFUSED", "ENOTFOUND", "ETIMEDOUT", "EHOSTUNREACH", "ECONNRESET"].includes(code)) {
+    return true;
+  }
+  const msg = err instanceof Error ? err.message.toLowerCase() : "";
+  return (
+    msg.includes("connect") ||
+    msg.includes("timeout") ||
+    msg.includes("database_url") ||
+    msg.includes("getaddrinfo")
+  );
+}
 
 export interface Deployment {
   id: string;
@@ -39,6 +58,20 @@ export interface DeploymentListItem extends Deployment {
 
 /** 배포 목록을 최신 배포순으로 조회한다(각 배포의 최신 drift 리포트 포함). */
 export async function listDeployments(limit = 100): Promise<DeploymentListItem[]> {
+  // DB 미연결(.env 없음 / Vercel에 DB 연결 전)이면 데모 데이터로 폴백한다.
+  if (!isDbConfigured()) return getDemoDeployments();
+  try {
+    return await listDeploymentsFromDb(limit);
+  } catch (err) {
+    if (isConnectionError(err)) {
+      console.warn("DB 연결 실패 → 데모 데이터로 폴백:", err instanceof Error ? err.message : err);
+      return getDemoDeployments();
+    }
+    throw err;
+  }
+}
+
+async function listDeploymentsFromDb(limit: number): Promise<DeploymentListItem[]> {
   const { rows } = await query<DeploymentListItem>(
     `SELECT d.id, d.service, d.version, d.environment,
             d.deployed_at AS "deployedAt", d.status,
